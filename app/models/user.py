@@ -14,5 +14,6 @@ class User(Base):
     height = Column(Integer, nullable=False)
     gender = Column(String(50), nullable=False)  
     bmi = Column(Float, nullable=False)
+    image_url = Column(String(255), nullable=True)
 
 Base.metadata.create_all(engine)

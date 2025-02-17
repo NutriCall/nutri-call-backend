@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import os
+import shutil
+from typing import Optional
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -7,6 +10,8 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin, UserResponse, UserUpdate
 from app.schemas.response import ResponseSchema
 from app.utils.security import get_current_user, hash_password, verify_password, create_access_token
+from fastapi.responses import FileResponse
+from app.config import APP_URL 
 
 router = APIRouter()
 
@@ -63,18 +68,62 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
 def logout_user():
     return generate_response("success", "Logout successful. Delete token on client side")
 
+UPLOAD_DIR = "uploads/"  
+
 @router.put("/edit-profile", response_model=ResponseSchema[UserResponse])
 def update_user_profile(
-    user_update: UserUpdate,
+    full_name: Optional[str] = Form(None),
+    age: Optional[int] = Form(None),
+    weight: Optional[int] = Form(None),
+    weight_target: Optional[int] = Form(None),
+    height: Optional[int] = Form(None),
+    gender: Optional[str] = Form(None),
+    bmi: Optional[float] = Form(None),
+    image_url: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    for key, value in user_update.dict(exclude_unset=True).items():
-        if value is not None:
-            setattr(current_user, key, value)
-    
+    if full_name:
+        current_user.full_name = full_name
+    if age:
+        current_user.age = age
+    if weight:
+        current_user.weight = weight
+    if weight_target:
+        current_user.weight_target = weight_target
+    if height:
+        current_user.height = height
+    if gender:
+        current_user.gender = gender
+    if bmi:
+        current_user.bmi = bmi
+
+    if image_url:
+        file_extension = image_url.filename.split(".")[-1]
+        filename = f"user_{current_user.id}.{file_extension}"
+        file_path = os.path.join(UPLOAD_DIR, filename)
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image_url.file, buffer)
+
+        current_user.image_url = f"/uploads/{filename}" 
+
     db.commit()
     db.refresh(current_user)
-    
+
     user_response = UserResponse.model_validate(current_user)
+    if user_response.image_url:
+        user_response.image_url = f"{APP_URL}{user_response.image_url}"    
     return generate_response("success", "Profile updated successfully", user_response)
+
+@router.get("/user", response_model=ResponseSchema[UserResponse])
+def get_user(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    image_url = f"{APP_URL}{current_user.image_url}" if current_user.image_url else None
+
+    user_response = UserResponse.model_validate(current_user)
+    user_response.image_url = image_url 
+
+    return generate_response("success", "User retrieved successfully", user_response)
