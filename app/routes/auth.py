@@ -4,9 +4,9 @@ from datetime import timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserLogin, UserResponse
+from app.schemas.user import UserCreate, UserLogin, UserResponse, UserUpdate
 from app.schemas.response import ResponseSchema
-from app.utils.security import hash_password, verify_password, create_access_token
+from app.utils.security import get_current_user, hash_password, verify_password, create_access_token
 
 router = APIRouter()
 
@@ -62,3 +62,19 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
 @router.post("/logout", response_model=ResponseSchema[None])
 def logout_user():
     return generate_response("success", "Logout successful. Delete token on client side")
+
+@router.put("/edit-profile", response_model=ResponseSchema[UserResponse])
+def update_user_profile(
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    for key, value in user_update.dict(exclude_unset=True).items():
+        if value is not None:
+            setattr(current_user, key, value)
+    
+    db.commit()
+    db.refresh(current_user)
+    
+    user_response = UserResponse.model_validate(current_user)
+    return generate_response("success", "Profile updated successfully", user_response)
