@@ -11,7 +11,8 @@ from app.schemas.user import UserCreate, UserLogin, UserResponse, UserUpdate
 from app.schemas.response import ResponseSchema
 from app.utils.security import get_current_user, hash_password, verify_password, create_access_token
 from fastapi.responses import FileResponse
-from app.config import APP_URL 
+from app.config import APP_URL, NGROK_URL
+from app.utils.bmr import calculate_goal_bmr
 
 router = APIRouter()
 
@@ -30,6 +31,11 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
+    
+    try:
+        goal = calculate_goal_bmr(user.age, user.weight, user.height, user.gender, user.fa)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     new_user = User(
         full_name=user.full_name,
@@ -40,7 +46,9 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         weight_target=user.weight_target,
         height=user.height,
         gender=user.gender,
-        bmi=user.bmi
+        bmi=user.bmi,
+        fa=user.fa,
+        goal=goal
     )
     db.add(new_user)
     db.commit()
@@ -80,6 +88,7 @@ def update_user_profile(
     gender: Optional[str] = Form(None),
     bmi: Optional[float] = Form(None),
     image_url: UploadFile = File(None),
+    fa: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -97,6 +106,21 @@ def update_user_profile(
         current_user.gender = gender
     if bmi:
         current_user.bmi = bmi
+    if fa:
+        current_user.fa = fa
+        
+    if age or weight or height or gender or fa:
+        try:
+            goal = calculate_goal_bmr(
+                age or current_user.age,
+                weight or current_user.weight,
+                height or current_user.height,
+                gender or current_user.gender,
+                fa or current_user.fa
+            )
+            current_user.goal = goal
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
     if image_url:
         file_extension = image_url.filename.split(".")[-1]
@@ -113,7 +137,7 @@ def update_user_profile(
 
     user_response = UserResponse.model_validate(current_user)
     if user_response.image_url:
-        user_response.image_url = f"{APP_URL}{user_response.image_url}"    
+        user_response.image_url = f"{NGROK_URL}{user_response.image_url}"    
     return generate_response("success", "Profile updated successfully", user_response)
 
 @router.get("/user", response_model=ResponseSchema[UserResponse])
@@ -121,9 +145,10 @@ def get_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    image_url = f"{APP_URL}{current_user.image_url}" if current_user.image_url else None
+    image_url = f"{NGROK_URL}{current_user.image_url}" if current_user.image_url else None
 
     user_response = UserResponse.model_validate(current_user)
     user_response.image_url = image_url 
 
     return generate_response("success", "User retrieved successfully", user_response)
+

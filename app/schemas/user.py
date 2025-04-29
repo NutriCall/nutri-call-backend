@@ -11,6 +11,7 @@ class UserBase(BaseModel):
     gender: str
     bmi: float
     image_url: Optional[str] = None
+    fa: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str
@@ -24,6 +25,7 @@ class UserUpdate(BaseModel):
     gender: Optional[str] = None
     bmi: Optional[float] = None
     image_url: Optional[str] = None
+    fa: Optional[str] = None
     
 class UserLogin(BaseModel):
     username: str
