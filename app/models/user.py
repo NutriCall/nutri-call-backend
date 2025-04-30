@@ -17,5 +17,8 @@ class User(Base):
     image_url = Column(String(255), nullable=True)
     fa = Column(String(255), nullable=True)
     goal = Column(Float, nullable=True) 
+    daily_carbs = Column(Float, nullable=True) 
+    daily_fat = Column(Float, nullable=True) 
+    daily_proteins = Column(Float, nullable=True) 
 
 Base.metadata.create_all(engine)

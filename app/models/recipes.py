@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, Date
 from app.database import Base, engine 
 
 class Recipes(Base):
@@ -7,7 +7,7 @@ class Recipes(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False) 
     user_id = Column(Integer, nullable=False)
-    date = Column(String(50), nullable=False)
+    date = Column(Date, nullable=False)
     image_url = Column(String(255), nullable=True)
     title = Column(String(255), nullable=False)
     sumber = Column(String(255), nullable=True)

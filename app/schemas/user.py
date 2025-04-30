@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel
+from fastapi import Form
 
 class UserBase(BaseModel):
     full_name: str
@@ -15,6 +16,32 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    
+    @classmethod
+    def as_form(
+        cls,
+        full_name: str = Form(...),
+        username: str = Form(...),
+        password: str = Form(...),
+        age: int = Form(...),
+        weight: int = Form(...),
+        weight_target: int = Form(...),
+        height: int = Form(...),
+        gender: str = Form(...),
+        bmi: float = Form(...),
+        fa: Optional[str] = Form(None),
+    ):
+        return cls(
+            full_name=full_name,
+            username=username,
+            password=password,
+            age=age,
+            weight=weight,
+            weight_target=weight_target,
+            height=height,
+            gender=gender,
+            bmi=bmi,fa=fa
+            )
     
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None

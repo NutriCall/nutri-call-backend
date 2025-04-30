@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-SECRET_KEY = "your_secret_key"
+SECRET_KEY = "53ac0fc523c05033355d617d8b01e7d97c8de57a45d939fdbb2d5248c2f2c027"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 43200
 

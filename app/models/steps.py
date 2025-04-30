@@ -6,6 +6,6 @@ class Steps(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     recipe_id = Column(Integer, nullable=False)
-    steps = Column(Integer, nullable=False)
+    steps = Column(String(255), nullable=False)
     
 Base.metadata.create_all(engine)

@@ -7,12 +7,15 @@ from datetime import timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserLogin, UserResponse, UserUpdate
+from app.models.weight_history import WeightHistory
+from app.schemas.user import UserCreate, UserResponse
 from app.schemas.response import ResponseSchema
 from app.utils.security import get_current_user, hash_password, verify_password, create_access_token
-from fastapi.responses import FileResponse
-from app.config import APP_URL, NGROK_URL
-from app.utils.bmr import calculate_goal_bmr
+from app.config import NGROK_URL
+from app.utils.bmr import calculate_goal_bmr, calculate_daily_proteins, calculate_daily_carbs, calculate_daily_fat
+from jose import JWTError, jwt
+from app.config import SECRET_KEY, ALGORITHM
+from datetime import date
 
 router = APIRouter()
 
@@ -27,13 +30,16 @@ def generate_response(status_message: str, message: str, data: dict = None, stat
     )
 
 @router.post("/signup", response_model=ResponseSchema[UserResponse])
-def register_user(user: UserCreate, db: Session = Depends(get_db)):
+def register_user(user: UserCreate = Depends(UserCreate.as_form), db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
     
     try:
         goal = calculate_goal_bmr(user.age, user.weight, user.height, user.gender, user.fa)
+        daily_carbs = calculate_daily_carbs(goal)
+        daily_fat = calculate_daily_fat(goal)
+        daily_proteins = calculate_daily_proteins(goal)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -48,11 +54,23 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         gender=user.gender,
         bmi=user.bmi,
         fa=user.fa,
-        goal=goal
+        goal=goal,
+        daily_carbs=daily_carbs,
+        daily_fat=daily_fat,
+        daily_proteins=daily_proteins
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    
+    new_weight_record = WeightHistory(
+        user_id=new_user.id,
+        weight=new_user.weight,
+        date=date.today()
+    )
+    db.add(new_weight_record)
+    db.commit()
+    db.refresh(new_weight_record)
 
     user_response = UserResponse.model_validate(new_user)
     return generate_response("success", "User registered successfully", user_response)
@@ -98,6 +116,12 @@ def update_user_profile(
         current_user.age = age
     if weight:
         current_user.weight = weight
+        new_weight_record = WeightHistory(
+            user_id=current_user.id,
+            weight=weight,
+            date=date.today()
+        )
+        db.add(new_weight_record)
     if weight_target:
         current_user.weight_target = weight_target
     if height:
@@ -119,6 +143,12 @@ def update_user_profile(
                 fa or current_user.fa
             )
             current_user.goal = goal
+            daily_carbs = calculate_daily_carbs(goal)
+            daily_fat = calculate_daily_fat(goal)
+            daily_proteins = calculate_daily_proteins(goal)
+            current_user.daily_carbs = daily_carbs
+            current_user.daily_fat = daily_fat
+            current_user.daily_proteins = daily_proteins
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
@@ -134,6 +164,8 @@ def update_user_profile(
 
     db.commit()
     db.refresh(current_user)
+    
+    
 
     user_response = UserResponse.model_validate(current_user)
     if user_response.image_url:
@@ -152,3 +184,20 @@ def get_user(
 
     return generate_response("success", "User retrieved successfully", user_response)
 
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> User:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    user = db.query(User).filter(User.username == username).first()
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    return user

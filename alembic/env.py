@@ -8,12 +8,12 @@ from alembic import context
 
 from app.database import Base
 from app.models.user import User
+from app.models.recipes import Recipes
+from app.models.food_compositions import FoodCompositions
 from app.models.steps import Steps
 from app.models.meals import Meals
 from app.models.ingredients import Ingredients
-from app.models.recipes import Recipes
 from app.models.temporary_list import TemporaryList
-from app.models.food_compositions import FoodCompositions
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
