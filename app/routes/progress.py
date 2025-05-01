@@ -123,3 +123,26 @@ def get_weight_progress(
         message="Weight progress data retrieved successfully",
         data=result
     )
+
+@router.get("/cal-today", response_model=ResponseSchema)
+def get_calories_today(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    today = date.today()
+
+    meals = (
+        db.query(Meals, FoodCompositions)
+        .join(FoodCompositions, Meals.composition_id == FoodCompositions.id)
+        .filter(Meals.user_id == current_user.id, Meals.date == today)
+        .all()
+    )
+
+    total_energy = sum((food.energi or 0) for _, food in meals)
+    user_goal = current_user.goal or 0
+
+    return generate_response(
+        status_message="success",
+        message="Calories consumed today",
+        data={"calories": total_energy, "goal": user_goal}
+    )

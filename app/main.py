@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from app.config import APP_URL
-from app.routes import auth, compositions, temporary, meals, recipes, progress
+from app.routes import auth, compositions, temporary, meals, recipes, progress, daily_report, weekly_report
 
 app = FastAPI(title="Nutri Call Backend")
 
@@ -12,6 +12,8 @@ app.include_router(temporary.router, prefix="/api/temporary", tags=["Temporary"]
 app.include_router(meals.router, prefix="/api/meals", tags=["Meals"])
 app.include_router(recipes.router, prefix="/api/recipes", tags=["Recipes"])
 app.include_router(progress.router, prefix="/api/progress", tags=["Progress"])
+app.include_router(daily_report.router, prefix="/api/daily-report", tags=["Daily Report"])
+app.include_router(weekly_report.router, prefix="/api/weekly-report", tags=["Weekly Report"])
 
 @app.get("/api")
 def read_root():

@@ -116,6 +116,7 @@ def update_user_profile(
         current_user.age = age
     if weight:
         current_user.weight = weight
+        db.flush()
         new_weight_record = WeightHistory(
             user_id=current_user.id,
             weight=weight,
@@ -165,8 +166,6 @@ def update_user_profile(
     db.commit()
     db.refresh(current_user)
     
-    
-
     user_response = UserResponse.model_validate(current_user)
     if user_response.image_url:
         user_response.image_url = f"{NGROK_URL}{user_response.image_url}"    
