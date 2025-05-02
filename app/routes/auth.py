@@ -81,7 +81,7 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    access_token = create_access_token(data={"sub": user.username}, expires_delta=timedelta(minutes=30))
+    access_token = create_access_token(data={"sub": user.username}, expires_delta=timedelta(minutes=432000))
     
     user_response = UserResponse.model_validate(user)
     return generate_response("success", "Login successful", {

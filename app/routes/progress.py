@@ -42,16 +42,22 @@ def get_nutrition_progress(
         total_carbs += food.karbohidrat or 0
         total_fat += food.lemak or 0
         total_proteins += food.protein or 0
+        
+    goal = current_user.goal or 0
+    difference_energy = goal - total_energy if goal else 0
+    percentage_energy = round((total_energy / goal) * 100, 2) if goal else 0
 
     data = {
-        "goal": current_user.goal or 0,
+        "goal": goal,
         "daily_carbs": current_user.daily_carbs or 0,
         "daily_fat": current_user.daily_fat or 0,
         "daily_proteins": current_user.daily_proteins or 0,
         "total_energy": total_energy,
         "total_carbs": total_carbs,
         "total_fat": total_fat,
-        "total_proteins": total_proteins
+        "total_proteins": total_proteins,
+        "difference_energy": difference_energy,
+        "percentage_energy": percentage_energy,
     }
 
     return generate_response(
@@ -76,40 +82,32 @@ def get_weight_progress(
     )
 
     traffic = []
-    if histories:
-        if len(histories) < 5:
-            last_weight = histories[0].weight
-            dates_used = {str(h.date) for h in histories}
-            additional_needed = 5 - len(histories)
+    dates_used = set()
+    last_weight = current_user.weight
 
-            for _ in range(additional_needed):
-                while True:
-                    random_days_ago = random.randint(0, 10)
-                    generated_date = today - timedelta(days=random_days_ago)
-                    if str(generated_date) not in dates_used:
-                        dates_used.add(str(generated_date))
-                        traffic.append({
-                            "date": str(generated_date),
-                            "weight": last_weight
-                        })
-                        break
+    for h in histories:
+        date_obj = h.date if isinstance(h.date, date) else h.date.date()
+        traffic.append({
+            "date": str(date_obj),
+            "weight": h.weight
+        })
+        dates_used.add(date_obj)
+        last_weight = h.weight  
 
-        for h in histories:
-            traffic.append({
-                "date": str(h.date),  # Pastikan ini string
-                "weight": h.weight
-            })
-
-        traffic.sort(key=lambda x: x["date"])  # Semua sudah pasti string
-    else:
-        for i in range(5):
-            random_days_ago = random.randint(0, 10)
-            generated_date = today - timedelta(days=random_days_ago)
+    additional_needed = 5 - len(traffic)
+    while additional_needed > 0:
+        random_days_ago = random.randint(1, 14)
+        generated_date = today - timedelta(days=random_days_ago)
+        if generated_date not in dates_used:
             traffic.append({
                 "date": str(generated_date),
-                "weight": current_user.weight
+                "weight": last_weight
             })
-        traffic.sort(key=lambda x: x["date"])  # Semua sudah pasti string
+            dates_used.add(generated_date)
+            additional_needed -= 1
+
+    # Sortir berdasarkan tanggal menaik
+    traffic.sort(key=lambda x: x["date"])
 
     result = {
         "weight": current_user.weight,
