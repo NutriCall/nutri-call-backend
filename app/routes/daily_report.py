@@ -82,18 +82,23 @@ def get_daily_calories(
             "Dinner": 0,
             "Snacks/Other": 0
         }
+        
+    total_weekly_energy = 0
 
     for meal, composition in meals_week:
         energi = composition.energi or 0
+        total_weekly_energy += energi
         meal_date = meal.date
         meal_type = meal.type if meal.type in graph_data[meal_date] else "Snacks/Other"
         graph_data[meal_date][meal_type] += energi
 
+    average = round(total_weekly_energy / 7, 2)
     graph = list(graph_data.values())
 
     data = DailyCaloriesResponse(
         goal=current_user.goal or 0,
         total_cal_today=total_calories,
+        average=average,
         today_calories=today_calories,
         graph=graph
     )
@@ -163,6 +168,9 @@ def get_food_eaten_today(
     for nama_bahan, data in food_counter.items():
         total_count += data["count"]
         total_calories_all += data["total_calories"]
+        total_fats_all += data["total_fats"]
+        total_carbs_all += data["total_carbs"]
+        total_proteins_all += data["total_proteins"]
         items.append(FoodEatenItem(
             nama_bahan=nama_bahan,
             count=data["count"],
@@ -171,6 +179,15 @@ def get_food_eaten_today(
             total_fats=round(data["total_fats"], 2),
             total_proteins=round(data["total_proteins"], 2)
         ))
+    
+    items.append(FoodEatenItem(
+        nama_bahan="Total",
+        count=total_count,
+        total_calories=round(total_calories_all, 2),
+        total_fats=round(total_fats_all, 2),
+        total_carbs=round(total_carbs_all, 2),
+        total_proteins=round(total_proteins_all, 2)
+    ))
 
     total = FoodEatenTotal(
         count=total_count,

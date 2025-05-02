@@ -10,6 +10,7 @@ class DailyCaloriesResponse(BaseModel):
     goal: float
     total_cal_today: float
     today_calories: List[MealTypeCalories]
+    average: float
     graph: List[Dict[str, Union[str, float]]] 
     
 
