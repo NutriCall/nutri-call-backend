@@ -63,7 +63,8 @@ def get_temporary_list_today(
             TemporaryList.composition_id,
             TemporaryList.date,
             TemporaryList.type,
-            FoodCompositions.nama_bahan
+            FoodCompositions.nama_bahan,
+            FoodCompositions.energi
         )
         .join(FoodCompositions, TemporaryList.composition_id == FoodCompositions.id)
         .filter(
@@ -81,7 +82,8 @@ def get_temporary_list_today(
             composition_id=item.composition_id,
             date=item.date,
             type=item.type,
-            nama_bahan=item.nama_bahan
+            nama_bahan=item.nama_bahan,
+            energi=item.energi
         )
         for item in results
     ]

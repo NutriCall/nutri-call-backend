@@ -1,5 +1,47 @@
 from pydantic import BaseModel
 from typing import Optional
+from fastapi import Form
+
+class NutrientCalculationRequest(BaseModel):
+    nama_bahan: str
+    size: float
+    
+    @classmethod
+    def as_form(
+        cls,
+        nama_bahan: str = Form(...),
+        size: float = Form(...),
+    ):
+        return cls(
+            nama_bahan=nama_bahan,
+            size=size
+        )
+    
+class NutrientResult(BaseModel):
+    nama_bahan: str
+    size: float
+    air: Optional[float]
+    energi: Optional[float]
+    protein: Optional[float]
+    lemak: Optional[float]
+    karbohidrat: Optional[float]
+    serat: Optional[float]
+    abu: Optional[float]
+    kalsium: Optional[float]
+    fosfor: Optional[float]
+    besi: Optional[float]
+    natrium: Optional[float]
+    kalium: Optional[float]
+    tembaga: Optional[float]
+    seng: Optional[float]
+    retinol: Optional[float]
+    beta_karoten: Optional[float]
+    karoten_total: Optional[float]
+    tiamin: Optional[float]
+    riboflavin: Optional[float]
+    niasin: Optional[float]
+    vit_c: Optional[float]
+    size: Optional[float]
 
 class CompositionBase(BaseModel):
     kode: Optional[str] = None
@@ -27,6 +69,7 @@ class CompositionBase(BaseModel):
     niasin: Optional[float] = None
     vit_c: Optional[float] = None
     bdd: Optional[float] = None
+    size: Optional[float] = None
     
 class CompositionSearch(BaseModel):
     nama_bahan: Optional[str] = None

@@ -28,6 +28,7 @@ class TemporaryListWithNamaBahanResponse(BaseModel):
     date: date
     type: str
     nama_bahan: str
+    energi: float
 
     class Config:
         orm_mode = True

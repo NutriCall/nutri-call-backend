@@ -30,6 +30,7 @@ class FoodCompositions(Base):
     niasin = Column(Float, nullable=True)
     vit_c = Column(Float, nullable=True)
     bdd = Column(Float, nullable=True)
+    size = Column(Float, nullable=True)
 
 Base.metadata.create_all(engine)
     
