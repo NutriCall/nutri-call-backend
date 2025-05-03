@@ -189,13 +189,12 @@ def get_weekly_resume(
         .first()
     )
 
-    # Konversi hasil ke dictionary dan isi None dengan 0
     total_data = {key: getattr(meals, key) or 0 for key in meals._fields}
 
     total_all = round(sum(total_data.values()), 2)
 
     nutrient_percentage = {
-        key: round((value / total_all) * 100, 2) if total_all > 0 else 0
+        key: round((value / total_all) * 100) if total_all > 0 else 0
         for key, value in total_data.items()
     }
 
