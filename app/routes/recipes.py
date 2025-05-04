@@ -9,6 +9,7 @@ from app.models.recipes import Recipes
 from app.models.ingredients import Ingredients
 from app.models.steps import Steps
 from app.models.food_compositions import FoodCompositions
+from app.models.temporary_list import TemporaryList
 from app.schemas.recipes import RecipeListItemSchema, RecipeResponse
 from app.schemas.response import ResponseSchema
 from app.database import get_db
@@ -29,7 +30,7 @@ def generate_response(status_message: str, message: str, data=None, status_code:
 
 @router.post("/", response_model=ResponseSchema)
 def create_recipe(
-    name: str = Form(...),
+    name: str = Form(None),
     title: str = Form(...),
     sumber: str = Form(None),
     ingredients: List[int] = Form(...),
@@ -59,7 +60,7 @@ def create_recipe(
                 total_nutrisi[key] += getattr(food, key, 0) or 0
 
     new_recipe = Recipes(
-        name=name,
+        name=title,
         title=title,
         sumber=sumber,
         user_id=current_user.id,
@@ -72,6 +73,12 @@ def create_recipe(
     db.commit()
     db.refresh(new_recipe)
     
+    db.query(TemporaryList).filter(
+        TemporaryList.user_id == current_user.id,
+        TemporaryList.type == "Ingredients"
+    ).delete()
+    db.commit()
+
     new_composition = FoodCompositions(
         nama_bahan=name,
         sumber=sumber,
