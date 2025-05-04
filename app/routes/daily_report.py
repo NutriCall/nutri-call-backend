@@ -92,7 +92,12 @@ def get_daily_calories(
         meal_type = meal.type if meal.type in graph_data[meal_date] else "Snacks/Other"
         graph_data[meal_date][meal_type] += energi
 
-    average = round(total_weekly_energy / 7, 2)
+    active_days = sum(
+        1 for day_data in graph_data.values()
+        if sum([day_data["Breakfast"], day_data["Lunch"], day_data["Dinner"], day_data["Snacks/Other"]]) > 0
+    )
+    average = round(total_weekly_energy / active_days, 2) if active_days > 0 else 0
+
     graph = list(graph_data.values())
 
     data = DailyCaloriesResponse(

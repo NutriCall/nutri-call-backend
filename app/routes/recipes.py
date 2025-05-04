@@ -183,10 +183,10 @@ def get_recipe_detail(recipe_id: int, db: Session = Depends(get_db)):
         "sumber": recipe.sumber,
         "image_url": f"{NGROK_URL}{recipe.image_url}" if recipe.image_url else None,
         "date": recipe.date,
-        "energi": recipe.energi,
-        "protein": recipe.protein,
-        "lemak": recipe.lemak,
-        "karbohidrat": recipe.karbohidrat,
+        "energi": round(recipe.energi / 1000, 2),
+        "protein": round(recipe.protein, 2),
+        "lemak": round(recipe.lemak, 2),
+        "karbohidrat": round(recipe.karbohidrat, 2),
         "ingredients": [
             {
                 "id": fc.id,

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import date
 from typing import List
 
@@ -28,6 +28,15 @@ class FoodCompositionDetails(BaseModel):
 
     class Config:
         orm_mode = True
+        
+    @field_validator('*', mode='before')
+    @classmethod
+    def round_floats(cls, v, info):
+        if isinstance(v, float):
+            if info.field_name == 'energi':
+                return round(v / 1000, 2)
+            return round(v, 2)
+        return v
 
 class MealsWithDetailsResponse(BaseModel):
     id: int
@@ -41,6 +50,13 @@ class MealsWithTotalEnergyResponse(BaseModel):
     type: str
     meals: list[MealsWithDetailsResponse]
     total_energi: float
+    
+    @field_validator('total_energi', mode='before')
+    @classmethod
+    def round_total_energy(cls, v):
+        if isinstance(v, float):
+            return round(v / 1000, 2)
+        return v
 
     class Config:
         orm_mode = True

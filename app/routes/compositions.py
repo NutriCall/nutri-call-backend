@@ -61,6 +61,18 @@ def calculate_nutrients(
     if not bahan:
         raise HTTPException(status_code=404, detail="Bahan tidak ditemukan")
 
+    existing = db.query(FoodCompositions).filter(
+        FoodCompositions.nama_bahan == bahan.nama_bahan,
+        FoodCompositions.size == request.size
+    ).first()
+
+    if existing:
+        return generate_response(
+            status_message="success",
+            message="Data gizi sudah tersedia",
+            data=existing
+        )
+
     faktor = request.size / 100.0
 
     new_composition = FoodCompositions(
@@ -101,4 +113,3 @@ def calculate_nutrients(
         message="Perhitungan dan penyimpanan gizi berhasil",
         data=new_composition
     )
-

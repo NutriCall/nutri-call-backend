@@ -1,10 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import List, Dict, Union
 
 class MealTypeCalories(BaseModel):
     type: str
     calories: float
     percentage: float
+    
+    @field_validator("calories", "percentage", mode="before")
+    @classmethod
+    def round_float(cls, v): return round(v, 2) if isinstance(v, float) else v
 
 class DailyCaloriesResponse(BaseModel):
     goal: float
@@ -12,6 +16,11 @@ class DailyCaloriesResponse(BaseModel):
     today_calories: List[MealTypeCalories]
     average: float
     graph: List[Dict[str, Union[str, float]]] 
+    
+    @field_validator("goal", "total_cal_today", "average", mode="before")
+    @classmethod
+    def divide_and_round(cls, v):
+        return round(v / 1000, 2) if isinstance(v, float) else v
     
 
 class FoodEatenItem(BaseModel):
@@ -21,6 +30,10 @@ class FoodEatenItem(BaseModel):
     total_fats: float
     total_carbs: float
     total_proteins: float
+    
+    @field_validator("*", mode="before")
+    @classmethod
+    def round_vals(cls, v): return round(v, 2) if isinstance(v, float) else v
 
 class FoodEatenTotal(BaseModel):
     count: int
@@ -28,6 +41,10 @@ class FoodEatenTotal(BaseModel):
     total_fats: float
     total_carbs: float
     total_proteins: float
+    
+    @field_validator("*", mode="before")
+    @classmethod
+    def round_vals(cls, v): return round(v, 2) if isinstance(v, float) else v
 
 class FoodEatenResponse(BaseModel):
     items: List[FoodEatenItem]
@@ -38,10 +55,18 @@ class MacroGraphItem(BaseModel):
     carbs: float
     proteins: float
     fats: float
+    
+    @field_validator("*", mode="before")
+    @classmethod
+    def round_vals(cls, v): return round(v, 2) if isinstance(v, float) else v
 
 class MacroDetail(BaseModel):
     value: float
     percentage: float
+    
+    @field_validator("*", mode="before")
+    @classmethod
+    def round_vals(cls, v): return round(v, 2) if isinstance(v, float) else v
 
 class TodayMacro(BaseModel):
     carbs: MacroDetail
@@ -57,6 +82,20 @@ class NutrientItem(BaseModel):
     consumed: float
     goal: Union[float, str] 
     difference: Union[float, str]  
+    
+    @field_validator("consumed", mode="before")
+    @classmethod
+    def round_consumed(cls, v, info):
+        if info.data.get("name") == "energi" and isinstance(v, float):
+            return round(v / 1000, 2)
+        return round(v, 2) if isinstance(v, float) else v
+
+    @field_validator("goal", "difference", mode="before")
+    @classmethod
+    def round_optional(cls, v, info):
+        if info.data.get("name") == "energi" and isinstance(v, float):
+            return round(v / 1000, 2)
+        return round(v, 2) if isinstance(v, float) else v
 
 class NutrientReport(BaseModel):
     nutrients: List[NutrientItem]

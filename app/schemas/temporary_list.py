@@ -1,5 +1,4 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, field_validator
 from datetime import date
 from fastapi import Form
 
@@ -29,6 +28,13 @@ class TemporaryListWithNamaBahanResponse(BaseModel):
     type: str
     nama_bahan: str
     energi: float
+    
+    @field_validator("energi", mode="before")
+    @classmethod
+    def convert_energi(cls, v):
+        if isinstance(v, float):
+            return round(v / 1000, 2)
+        return v
 
     class Config:
         orm_mode = True

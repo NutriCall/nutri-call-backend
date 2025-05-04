@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 from fastapi import Form
 
@@ -42,6 +42,15 @@ class NutrientResult(BaseModel):
     niasin: Optional[float]
     vit_c: Optional[float]
     size: Optional[float]
+    
+    @field_validator('*', mode='before')
+    @classmethod
+    def round_and_convert(cls, v, info):
+        if isinstance(v, float):
+            if info.field_name == 'energi':
+                return round(v / 1000, 2)
+            return round(v, 2)
+        return v
 
 class CompositionBase(BaseModel):
     kode: Optional[str] = None
@@ -77,9 +86,25 @@ class CompositionSearch(BaseModel):
 class CompositionMinimalResponse(BaseModel):
     id: int
     nama_bahan: str
+    energi: float
+    
+    @field_validator('energi', mode='before')
+    @classmethod
+    def convert_energi(cls, v):
+        return round((v or 0) / 1000, 2)
 
 class CompositionResponse(CompositionBase):
     id: int
+    
+    @field_validator('*', mode='before')
+    @classmethod
+    def round_float(cls, v, info):
+        if isinstance(v, float):
+            field_name = info.field_name
+            if field_name == 'energi':
+                return round(v / 1000, 2)  
+            return round(v, 2)
+        return v
 
     class Config:
         from_attributes = True

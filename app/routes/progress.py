@@ -48,16 +48,16 @@ def get_nutrition_progress(
     percentage_energy = round((total_energy / goal) * 100, 2) if goal else 0
 
     data = {
-        "goal": goal,
+        "goal": round(goal/1000, 2),
         "daily_carbs": current_user.daily_carbs or 0,
         "daily_fat": current_user.daily_fat or 0,
         "daily_proteins": current_user.daily_proteins or 0,
-        "total_energy": total_energy,
-        "total_carbs": total_carbs,
-        "total_fat": total_fat,
-        "total_proteins": total_proteins,
-        "difference_energy": difference_energy,
-        "percentage_energy": percentage_energy,
+        "total_energy": round(total_energy/1000, 2),
+        "total_carbs": round(total_carbs, 2),
+        "total_fat": round(total_fat, 2),
+        "total_proteins": round(total_proteins,2),
+        "difference_energy": round(difference_energy/1000, 2),
+        "percentage_energy": round(percentage_energy, 2),
     }
 
     return generate_response(
