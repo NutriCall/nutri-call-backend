@@ -49,7 +49,7 @@ def create_recipe(
         "air": 0, "energi": 0, "protein": 0, "lemak": 0, "karbohidrat": 0, "serat": 0,
         "abu": 0, "kalsium": 0, "fosfor": 0, "besi": 0, "natrium": 0, "kalium": 0,
         "tembaga": 0, "seng": 0, "retinol": 0, "beta_karoten": 0, "karoten_total": 0,
-        "tiamin": 0, "riboflavin": 0, "niasin": 0, "vit_c": 0
+        "tiamin": 0, "riboflavin": 0, "niasin": 0, "vit_c": 0, "size": 0
     }
 
     for cid in ingredients:
@@ -65,6 +65,7 @@ def create_recipe(
         user_id=current_user.id,
         date=date.today(),
         image_url=image_url,
+        is_published=0,
         **total_nutrisi
     )
     db.add(new_recipe)
@@ -93,15 +94,24 @@ def create_recipe(
     
     response_data = {
         "id": new_recipe.id,
+        "composition_id": new_composition.id if not existing else existing.id,
         "name": new_recipe.name,
         "title": new_recipe.title,
         "sumber": new_recipe.sumber,
         "image_url": f"{NGROK_URL}{image_url}",
         "date": new_recipe.date,
-        "energi": new_recipe.energi,
-        "protein": new_recipe.protein,
-        "lemak": new_recipe.lemak,
-        "karbohidrat": new_recipe.karbohidrat
+        "energi": round(new_recipe.energi / 1000,2),
+        "protein": round(new_recipe.protein,2),
+        "lemak": round(new_recipe.lemak,2),
+        "karbohidrat": round(new_recipe.karbohidrat,2),
+        "steps": steps,
+        "ingredients": [
+            {
+                "id": fc.id,
+                "nama_bahan": fc.nama_bahan,
+            }
+            for fc in db.query(FoodCompositions).filter(FoodCompositions.id.in_(ingredients)).all()
+        ]
     }
 
     return generate_response(
@@ -115,6 +125,7 @@ def get_recipes(db: Session = Depends(get_db)):
     results = (
         db.query(Recipes, User)
         .join(User, Recipes.user_id == User.id)
+        .filter(Recipes.is_published == 1) 
         .all()
     )
 
@@ -201,4 +212,25 @@ def get_recipe_detail(recipe_id: int, db: Session = Depends(get_db)):
         status_message="success",
         message="Recipe retrieved successfully",
         data=response_data
+    )
+
+@router.post("/publish/{recipe_id}", response_model=ResponseSchema)
+def publish_recipe(recipe_id: int, db: Session = Depends(get_db)):
+    recipe = db.query(Recipes).filter(Recipes.id == recipe_id).first()
+
+    if not recipe:
+        return generate_response(
+            status_message="error",
+            message="Recipe not found",
+            data=None,
+            status_code=404
+        )
+
+    recipe.is_published = 1
+    db.commit()
+
+    return generate_response(
+        status_message="success",
+        message="Recipe published successfully",
+        data=None
     )

@@ -179,7 +179,7 @@ def get_food_eaten_today(
         items.append(FoodEatenItem(
             nama_bahan=nama_bahan,
             count=data["count"],
-            total_calories=round(data["total_calories"], 2),
+            total_calories=round(data["total_calories"]/ 1000, 2),
             total_carbs=round(data["total_carbs"], 2),
             total_fats=round(data["total_fats"], 2),
             total_proteins=round(data["total_proteins"], 2)
@@ -188,7 +188,7 @@ def get_food_eaten_today(
     items.append(FoodEatenItem(
         nama_bahan="Total",
         count=total_count,
-        total_calories=round(total_calories_all, 2),
+        total_calories=round(total_calories_all/1000, 2),
         total_fats=round(total_fats_all, 2),
         total_carbs=round(total_carbs_all, 2),
         total_proteins=round(total_proteins_all, 2)

@@ -50,7 +50,7 @@ def create_temporary_item(
 
 @router.get("/", response_model=ResponseSchema[list[TemporaryListWithNamaBahanResponse]])
 def get_temporary_list_today(
-    type: str = Query(..., regex="^(Breakfast|Lunch|Dinner|Snacks/Other)$"),
+    type: str = Query(..., regex="^(Breakfast|Lunch|Dinner|Snacks/Other|Ingredients)$"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

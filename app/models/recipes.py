@@ -32,5 +32,7 @@ class Recipes(Base):
     riboflavin = Column(Float, nullable=True)
     niasin = Column(Float, nullable=True)
     vit_c = Column(Float, nullable=True)
+    is_published = Column(Integer, nullable=True)
+    size = Column(Float, nullable=True)
     
 Base.metadata.create_all(engine)
