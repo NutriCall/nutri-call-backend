@@ -80,7 +80,7 @@ def create_recipe(
     db.commit()
 
     new_composition = FoodCompositions(
-        nama_bahan=name,
+        nama_bahan=title,
         sumber=sumber,
         **total_nutrisi
     )
@@ -102,7 +102,7 @@ def create_recipe(
     response_data = {
         "id": new_recipe.id,
         "composition_id": new_composition.id if not existing else existing.id,
-        "name": new_recipe.name,
+        "name": new_recipe.title,
         "title": new_recipe.title,
         "sumber": new_recipe.sumber,
         "image_url": f"{NGROK_URL}{image_url}",
