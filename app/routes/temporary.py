@@ -93,3 +93,25 @@ def get_temporary_list_today(
         message=f"List temporary untuk {type} hari ini",
         data=response_data
     )
+    
+@router.delete("/delete/{id}", response_model=ResponseSchema[TemporaryListResponse])
+def delete_temporary_item(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    item = db.query(TemporaryList).filter(TemporaryList.id == id, TemporaryList.user_id == current_user.id).first()
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Temporary item not found")
+
+    db.delete(item)
+    db.commit()
+
+    response_data = TemporaryListResponse.from_orm(item)
+
+    return generate_response(
+        status_message="success",
+        message="Temporary item deleted",
+        data=response_data
+    )
