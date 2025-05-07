@@ -115,3 +115,24 @@ def delete_temporary_item(
         message="Temporary item deleted",
         data=response_data
     )
+    
+@router.delete("/delete_all", response_model=ResponseSchema[TemporaryListResponse])
+def delete_all_temporary_items(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    items = db.query(TemporaryList).filter(TemporaryList.user_id == current_user.id).filter(TemporaryList.type == "Ingredients").all()
+
+    if not items:
+        raise HTTPException(status_code=404, detail="No temporary items found")
+
+    for item in items:
+        db.delete(item)
+
+    db.commit()
+
+    return generate_response(
+        status_message="success",
+        message="All temporary items deleted",
+        data=None
+    )
